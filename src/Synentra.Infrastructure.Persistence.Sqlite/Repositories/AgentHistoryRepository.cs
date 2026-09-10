@@ -89,7 +89,7 @@ public class AgentHistoryRepository : IAgentHistoryRepository
     public async Task RecordRequestAsync(Guid agentId, bool wasViolation, double riskScore, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-        var windowStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0);
+        var windowStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, DateTimeKind.Utc);
         var windowDuration = 60; // seconds
 
         await using var context = await _appContextFactory.CreateDbContextAsync(cancellationToken);

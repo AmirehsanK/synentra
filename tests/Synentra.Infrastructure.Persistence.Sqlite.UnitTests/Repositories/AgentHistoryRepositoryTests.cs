@@ -181,6 +181,7 @@ public class AgentHistoryRepositoryTests
         history!.TotalRequests.Should().Be(1);
         history.ViolationCount.Should().Be(0);
         history.AverageRiskScore.Should().BeApproximately(0.2, 0.001);
+        history!.WindowStart.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [Fact]
