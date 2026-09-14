@@ -90,12 +90,12 @@ public class HitlService : IHitlService
             ExpiresAt: expiresAt);
 
         var ttl = TimeSpan.FromSeconds(_config.TimeoutSeconds);
-        await _cache.Current.SetAsync($"hitl:{id}", pending);
+        await _cache.Current.SetAsync($"hitl:{id}", pending, cancellationToken);
 
         // Track pending ID in an index so GetAllPendingAsync works
-        var index = await GetPendingIndexAsync();
+        var index = await GetPendingIndexAsync(cancellationToken);
         index.Add(id);
-        await _cache.Current.SetAsync("hitl:index", index);
+        await _cache.Current.SetAsync("hitl:index", index, cancellationToken);
 
         _logger.LogInformation("HITL request {HitlId} suspended for agent {AgentId}. Reason: {Reason}. Expires: {ExpiresAt}",
             id, context.AgentId, reason, expiresAt);
@@ -110,14 +110,14 @@ public class HitlService : IHitlService
         string id, 
         CancellationToken cancellationToken = default)
     {
-        var (found, value) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
+        var (found, value) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}", cancellationToken);
         if (!found || value is null)
             return null;
 
         if (_clock.UtcNow > value.ExpiresAt)
         {
             _logger.LogWarning("HITL request {HitlId} has expired", id);
-            await CleanupAsync(id);
+            await CleanupAsync(id, cancellationToken);
             return null;
         }
 
@@ -128,20 +128,20 @@ public class HitlService : IHitlService
         string id, 
         CancellationToken cancellationToken = default)
     {
-        var (approvedFound, _) = await _cache.Current.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}");
+        var (approvedFound, _) = await _cache.Current.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}", cancellationToken);
         if (approvedFound)
         {
-            var (_, decision) = await _cache.Current.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}");
+            var (_, decision) = await _cache.Current.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}", cancellationToken);
             return decision?.Status ?? HitlRequestStatus.NotFound;
         }
 
-        var (pendingFound, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
+        var (pendingFound, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}", cancellationToken);
         if (!pendingFound || pending is null)
             return HitlRequestStatus.NotFound;
 
         if (_clock.UtcNow > pending.ExpiresAt)
         {
-            await CleanupAsync(id);
+            await CleanupAsync(id, cancellationToken);
             return HitlRequestStatus.Expired;
         }
 
@@ -153,7 +153,7 @@ public class HitlService : IHitlService
         int pageSize, 
         CancellationToken cancellationToken = default)
     {
-        var index = await GetPendingIndexAsync();
+        var index = await GetPendingIndexAsync(cancellationToken);
         var totalCount = index.Count;
 
         var items = new List<PendingHitlRequest>();
@@ -170,7 +170,7 @@ public class HitlService : IHitlService
     public async Task<IReadOnlyList<PendingHitlRequest>> GetAllPendingAsync(
         CancellationToken cancellationToken = default)
     {
-        var index = await GetPendingIndexAsync();
+        var index = await GetPendingIndexAsync(cancellationToken);
         var results = new List<PendingHitlRequest>();
 
         foreach (var id in index.ToList())
@@ -206,7 +206,7 @@ public class HitlService : IHitlService
     public async Task RemoveAsync(
         string id, 
         CancellationToken cancellationToken = default)
-        => await CleanupAsync(id);
+        => await CleanupAsync(id, cancellationToken);
 
     public async Task<HitlReplayResult> ReplayAsync(
         string id, 
@@ -224,7 +224,7 @@ public class HitlService : IHitlService
             return new HitlReplayResult(false, null, "HITL request is still awaiting a reviewer decision.", null, null);
 
         // 2. Retrieve the original suspended request
-        var (found, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
+        var (found, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}", cancellationToken);
         if (!found || pending is null)
             return new HitlReplayResult(false, null, "Original request data is no longer available.", null, null);
 
@@ -281,7 +281,7 @@ public class HitlService : IHitlService
             "HITL_REPLAYED", $"Upstream responded with {(int)response.StatusCode}", cancellationToken);
 
         // 6. Clean up — request fully processed, no longer needed in cache
-        await CleanupAsync(id);
+        await CleanupAsync(id, cancellationToken);
         await _cache.Current.RemoveAsync($"hitl:decision:{id}");
 
         return new HitlReplayResult(true, (int)response.StatusCode, null, responseHeaders, responseBody);
@@ -304,9 +304,9 @@ public class HitlService : IHitlService
             DecidedAt: _clock.UtcNow);
 
         var ttl = TimeSpan.FromSeconds(_config.TimeoutSeconds);
-        await _cache.Current.SetAsync($"hitl:decision:{id}", decision);
+        await _cache.Current.SetAsync($"hitl:decision:{id}", decision, cancellationToken);
 
-        var (found, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
+        var (found, pending) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}", cancellationToken);
 
         await RecordAuditAsync(
             id,
@@ -347,17 +347,17 @@ public class HitlService : IHitlService
         }
     }
 
-    private async Task CleanupAsync(string id)
+    private async Task CleanupAsync(string id, CancellationToken cancellationToken = default)
     {
         await _cache.Current.RemoveAsync($"hitl:{id}");
-        var index = await GetPendingIndexAsync();
+        var index = await GetPendingIndexAsync(cancellationToken);
         index.Remove(id);
-        await _cache.Current.SetAsync("hitl:index", index);
+        await _cache.Current.SetAsync("hitl:index", index, cancellationToken);
     }
 
-    private async Task<HashSet<string>> GetPendingIndexAsync()
+    private async Task<HashSet<string>> GetPendingIndexAsync(CancellationToken cancellationToken = default)
     {
-        var (found, index) = await _cache.Current.TryGetValueAsync<HashSet<string>>("hitl:index");
+        var (found, index) = await _cache.Current.TryGetValueAsync<HashSet<string>>("hitl:index", cancellationToken);
         return found && index is not null ? index : new HashSet<string>();
     }
 
