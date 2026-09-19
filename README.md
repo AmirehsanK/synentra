@@ -26,6 +26,10 @@
 
 ## See Synentra in Action
 
+<p align="center">
+  <img src="img/demo.gif" alt="Synentra intent-aware governance demo" width="800" />
+</p>
+
 An AI agent sends a request:
 
 ```http
