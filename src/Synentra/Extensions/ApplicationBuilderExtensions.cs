@@ -106,7 +106,7 @@ public static class ApplicationBuilderExtensions
     {
         using var scope = app.ApplicationServices.CreateScope();
         var serverConfiguration = scope.ServiceProvider.GetRequiredService<IOptions<SystemConfiguration>>();
-        if (serverConfiguration.Value.Cors.Enabled == true)
+        if (serverConfiguration.Value.Cors.Enabled)
             app.UseCors("SynentraCors");
         return app;
     }

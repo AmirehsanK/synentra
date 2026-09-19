@@ -101,7 +101,7 @@ public class RiskScoringServiceTests
 
         var ctxLow = BuildContext(Guid.NewGuid());
         ctxLow.RequestContext.TrustScore = -5;
-        _cacheProvider.TryGetValueAsync<RiskEvaluationResult>(Arg.Any<string>()).Returns((false, null));
+        _cacheProvider.TryGetValueAsync<RiskEvaluationResult>(Arg.Any<string>(), TestContext.Current.CancellationToken).Returns((false, null));
         var resLow = await sut.ComputeRiskScoreAsync(ctxLow, TestContext.Current.CancellationToken);
         resLow.TrustScore.Should().Be(0);
 
