@@ -42,7 +42,7 @@ public class AgentAuthConfigProviderTests
 
         // Assert
         provider.ExternalIdentity.Provider.Should().Be(ExternalIdentityProviderType.Jwt);
-        provider.ExternalIdentity.Jwt.ValidateIssuer.Should().BeTrue();
+        provider.ExternalIdentity.Jwt!.ValidateIssuer.Should().BeTrue();
         provider.ExternalIdentity.Jwt.ValidateAudience.Should().BeTrue();
         provider.ExternalIdentity.Jwt.Authority.Should().Be("https://auth.example.com");
         provider.ExternalIdentity.Jwt.Audience.Should().Be("api://default");
@@ -59,7 +59,7 @@ public class AgentAuthConfigProviderTests
 
         // Assert
         provider.ExternalIdentity.Provider.Should().Be(default(ExternalIdentityProviderType));
-        provider.ExternalIdentity.Jwt.ValidateIssuer.Should().BeFalse();
+        provider.ExternalIdentity.Jwt!.ValidateIssuer.Should().BeFalse();
         provider.ExternalIdentity.Jwt.ValidateAudience.Should().BeFalse();
         provider.ExternalIdentity.Jwt.Authority.Should().BeEmpty();
         provider.ExternalIdentity.Jwt.Audience.Should().BeEmpty();
@@ -79,7 +79,7 @@ public class AgentAuthConfigProviderTests
         var provider = new AgentAuthConfigProvider(options);
 
         // Assert
-        provider.ExternalIdentity.Jwt.ValidateIssuer.Should().BeFalse();
+        provider.ExternalIdentity.Jwt!.ValidateIssuer.Should().BeFalse();
         provider.ExternalIdentity.Jwt.ValidateAudience.Should().BeFalse();
         provider.ExternalIdentity.Jwt.Authority.Should().BeEmpty();
         provider.ExternalIdentity.Jwt.Audience.Should().BeEmpty();
@@ -192,7 +192,7 @@ public class AgentAuthConfigProviderTests
         var provider = new AgentAuthConfigProvider(CreateOptions(config));
 
         provider.ExternalIdentity.Provider.Should().Be(ExternalIdentityProviderType.Jwt);
-        provider.ExternalIdentity.Jwt.Authority.Should().BeEmpty();
+        provider.ExternalIdentity.Jwt!.Authority.Should().BeEmpty();
         provider.ExternalIdentity.Jwt.Audience.Should().BeEmpty();
         provider.ExternalIdentity.Jwt.ValidateIssuer.Should().BeFalse();
         provider.ExternalIdentity.Jwt.ValidateAudience.Should().BeFalse();
@@ -211,7 +211,7 @@ public class AgentAuthConfigProviderTests
         provider.FallbackToAuthorization.Should().BeFalse();
         provider.TokenIssuance.Expiration.Should().Be(TimeSpan.FromMinutes(15));
         provider.ExternalIdentity.Provider.Should().Be(ExternalIdentityProviderType.Jwt);
-        provider.ExternalIdentity.Jwt.Authority.Should().BeEmpty();
+        provider.ExternalIdentity.Jwt!.Authority.Should().BeEmpty();
     }
 
     private sealed class NullValueOptions : IOptions<AgentAuthConfiguration>
