@@ -521,7 +521,7 @@ public class JwtAgentAuthenticatorTests
     }
 
     [Fact]
-    public void ValidateExternalTokenAsync_WhenExternalIdentityDisabled_ReturnsNull()
+    public async Task ValidateExternalTokenAsync_WhenExternalIdentityDisabled_ReturnsNull()
     {
         // Test the internal guard clause by invoking the private method via reflection
         var sut = CreateSut(externalEnabled: false);
@@ -529,6 +529,7 @@ public class JwtAgentAuthenticatorTests
             BindingFlags.NonPublic | BindingFlags.Instance)!;
         var task = (Task<ClaimsPrincipal?>)method.Invoke(sut, new object[] { "token", CancellationToken.None })!;
 
-        task.Result.Should().BeNull();
+        var result = await task;
+        result.Should().BeNull();
     }
 }
