@@ -91,7 +91,7 @@ public class InternalOnnxProviderTests
         var sut = new InternalOnnxProvider(
             DisabledOptions(), _cacheService, loader, NullLogger<InternalOnnxProvider>.Instance);
 
-        var result = await sut.AnalyzeAsync("request body", "/api", CancellationToken.None);
+        var result = await sut.AnalyzeAsync("request body", "/api", TestContext.Current.CancellationToken);
 
         result.Intent.Should().Be("suspicious");
         result.Confidence.Should().Be(0.5);
@@ -105,7 +105,7 @@ public class InternalOnnxProviderTests
         var sut = new InternalOnnxProvider(
             DisabledOptions(), _cacheService, loader, NullLogger<InternalOnnxProvider>.Instance);
 
-        var result = await sut.AnalyzeAsync(null, "/api", CancellationToken.None);
+        var result = await sut.AnalyzeAsync(null, "/api", TestContext.Current.CancellationToken);
 
         result.Intent.Should().Be("suspicious");
         result.FallbackSafe.Should().BeTrue();
@@ -118,7 +118,7 @@ public class InternalOnnxProviderTests
         var sut = new InternalOnnxProvider(
             DisabledOptions(), _cacheService, loader, NullLogger<InternalOnnxProvider>.Instance);
 
-        var result = await sut.AnalyzeAsync("   ", "/api", CancellationToken.None);
+        var result = await sut.AnalyzeAsync("   ", "/api", TestContext.Current.CancellationToken);
 
         result.Intent.Should().Be("suspicious");
         result.FallbackSafe.Should().BeTrue();
@@ -253,11 +253,11 @@ public class InternalOnnxProviderTests
             loader,
             NullLogger<InternalOnnxProvider>.Instance);
 
-        await sut.AnalyzeAsync("   ", "", CancellationToken.None);
+        await sut.AnalyzeAsync("   ", "", TestContext.Current.CancellationToken);
 
         await _cacheProvider
             .DidNotReceiveWithAnyArgs()
-            .TryGetValueAsync<object>(default!);
+            .TryGetValueAsync<object>(default!, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -269,11 +269,11 @@ public class InternalOnnxProviderTests
             Substitute.For<IModelPackageLoader>(),
             NullLogger<InternalOnnxProvider>.Instance);
 
-        await sut.AnalyzeAsync(null, "", CancellationToken.None);
+        await sut.AnalyzeAsync(null, "", TestContext.Current.CancellationToken);
 
         await _cacheProvider
             .DidNotReceiveWithAnyArgs()
-            .TryGetValueAsync<object>(default!);
+            .TryGetValueAsync<object>(default!, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -306,7 +306,7 @@ public class InternalOnnxProviderTests
         var result = await sut.AnalyzeAsync(
             "hello",
             Guid.NewGuid().ToString(),
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         result.Intent.Should().Be("suspicious");
     }
@@ -411,7 +411,7 @@ public class InternalOnnxProviderTests
         await sut.InitializeAsync(TestContext.Current.CancellationToken);
 
         await loader.DidNotReceiveWithAnyArgs()
-            .LoadAsync(default!, default);
+            .LoadAsync(default!, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -486,7 +486,7 @@ public class InternalOnnxProviderTests
         sut.Dispose();
 
         var initialize = () => sut.InitializeAsync();
-        var analyze = () => sut.AnalyzeAsync("hello", "", CancellationToken.None);
+        var analyze = () => sut.AnalyzeAsync("hello", "", TestContext.Current.CancellationToken);
 
         await initialize.Should().ThrowAsync<ObjectDisposedException>();
         await analyze.Should().ThrowAsync<ObjectDisposedException>();
@@ -578,11 +578,11 @@ public class InternalOnnxProviderTests
             .WithMessage("*Unable to calculate probabilities*");
     }
 
-    public static TheoryData<float[]> InvalidSoftmaxInputs => new()
-    {
+    public static TheoryData<float[]> InvalidSoftmaxInputs =>
+    [
         new[] { float.NaN, 0f },
         new[] { float.PositiveInfinity, float.PositiveInfinity }
-    };
+    ];
 
     [Fact]
     public void ValidateLogits_EmptyArray_ThrowsInvalidOperationException()
