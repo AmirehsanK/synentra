@@ -492,7 +492,11 @@ public class JwtAgentAuthenticatorTests
             externalEnabled: true,
             configureExternal: ext =>
             {
-                ext.Jwt!.Authority = null;
+                ext.Jwt = new JwtIdentityConfiguration
+                {
+                    Authority = string.Empty,
+                    MetadataUrl = null,
+                };
                 ext.Jwt.MetadataUrl = null;
             });
 
