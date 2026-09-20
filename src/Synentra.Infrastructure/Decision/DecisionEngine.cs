@@ -71,7 +71,7 @@ public class DecisionEngine : IDecisionEngine
             },
             cancellationToken);
 
-        var decision = HandlePolicyDecision(intentResult, riskResult, policyResult);
+        var decision = HandlePolicyDecision(riskResult, policyResult);
         return await FinalizeAsync(context, decision, cancellationToken);
     }
 
@@ -99,7 +99,7 @@ public class DecisionEngine : IDecisionEngine
             },
             cancellationToken);
 
-        return HandlePolicyDecision(intentResult, riskResult, policyResult);
+        return HandlePolicyDecision(riskResult, policyResult);
     }
 
     private async Task<PolicyDecision> EvaluatePolicyAsync(
@@ -112,8 +112,7 @@ public class DecisionEngine : IDecisionEngine
         return await _policyProvider.EvaluateAsync(context, cancellationToken);
     }
 
-    private DecisionResult HandlePolicyDecision(
-        IntentClassificationResult intentResult,
+    private static DecisionResult HandlePolicyDecision(
         RiskEvaluationResult riskResult,
         PolicyDecision policyDecision)
     {
